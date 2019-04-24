@@ -1,10 +1,28 @@
 # The goal of this script is to obtain weekly price data for n number of securities
 
-# Import Pandas web data access library
-from pandas_datareader import data as web
+# For math and graphs later
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import quandl
+import scipy.optimize as sco
+import seaborn as sns
 
-# Request quote information for single ticker
+# Import list of tickers to get prices (using static list for now)
+stocks = ['AAPL', 'MSFT','KO','PEP','GOOGL','VZ']
 
-singleQuote = web.DataReader('TSLA', data_source='yahoo', start='2010-01-01', end='2014-12-31')
+# Add in API key
+quandl.ApiConfig.api_key = 'yy5biiJzFSehT4GjgxDN'
 
-print(singleQuote) 
+# Call API for data
+data = quandl.get_table('WIKI/PRICES', ticker = stocks, 
+    qopts = { 'columns': ['date', 'ticker', 'adj_close'] },
+    date = { 'gte': start, 'lte': end }, paginate=True)
+data.head()
+
+df = data.set_index('date')
+table = df.pivot(columns='ticker')
+# By specifying col[1] in below list comprehension
+# You can select the stock names under multi-level column
+table.columns = [col[1] for col in table.columns]
+table.head()

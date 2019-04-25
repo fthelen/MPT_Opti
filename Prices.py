@@ -14,7 +14,6 @@ stocks = ['AAPL', 'MSFT','KO','PEP','GOOGL','VZ', 'BABA', 'V', 'ULTA', 'CSCO', '
 start_date = '2013-01-01'
 end_date = '2018-12-31'
 
-
 # Add in API key
 quandl.ApiConfig.api_key = 'yy5biiJzFSehT4GjgxDN'
 

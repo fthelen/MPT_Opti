@@ -37,8 +37,6 @@ def save_sp500_tickers():
    
     return tickers
 
-# save_sp500_tickers()
-
 def get_data_from_yahoo(reload_sp500=False):
     nowork = []
     yf.pdr_override()
@@ -65,8 +63,6 @@ def get_data_from_yahoo(reload_sp500=False):
     
     print(nowork)
 
-
-
 def compile_data():
     if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv'): 
         with open("sp500tickers.pickle","rb") as f:
@@ -85,11 +81,6 @@ def compile_data():
                 main_df = main_df.join(df, how='outer')
 
             main_df.to_csv('sp_500_join_closes.csv')
-
-
-
-
-
 
 def neg_sharpe_ratio(weights, mean_returns, cov_matrix, risk_free_rate):
     p_var, p_ret = portfolio_annualized_performance(weights, mean_returns, cov_matrix)

@@ -65,7 +65,7 @@ def get_data_from_yahoo(reload_sp500=False):
     
     print(nowork)
 
-get_data_from_yahoo()
+
 
 def compile_data():
     if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv'): 
@@ -86,17 +86,10 @@ def compile_data():
 
             main_df.to_csv('sp_500_join_closes.csv')
 
-compile_data()
 
-# Variables
-table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv')
-table.set_index('Date', inplace=True)
 
-returns = table.pct_change()
-mean_returns = returns.mean()
-cov_matrix = returns.cov()
-num_portfolios = 250000
-risk_free_rate = 0.0178
+
+
 
 def neg_sharpe_ratio(weights, mean_returns, cov_matrix, risk_free_rate):
     p_var, p_ret = portfolio_annualized_performance(weights, mean_returns, cov_matrix)
@@ -201,5 +194,20 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     plt.ylabel('annualized returns')
     plt.legend(labelspacing=0.8)    
 
+get_data_from_yahoo()
+compile_data()
+
+# Call up compiled data
+table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv')
+table.set_index('Date', inplace=True)
+
+# Variables
+returns = table.pct_change()
+mean_returns = returns.mean()
+cov_matrix = returns.cov()
+num_portfolios = 250000
+risk_free_rate = 0.0178
+
+# Run optimization and show graph
 display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
 plt.show()

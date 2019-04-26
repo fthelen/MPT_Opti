@@ -14,13 +14,11 @@ from random import randint
 import scipy.optimize as sco
 import numpy as np
 
-# Assign graph style
-style.use('fivethirtyeight')
-
 # date time
 start = dt.datetime(2019,3,31)
 end = dt.datetime(2019,4,25)
 
+# All data extraction functions
 def save_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     soup = bs.BeautifulSoup(resp.text, "lxml")
@@ -82,6 +80,22 @@ def compile_data():
 
             main_df.to_csv('sp_500_join_closes.csv')
 
+# Run data functions
+get_data_from_yahoo()
+compile_data()
+
+# Portfolio optimization and dislay functions
+def min_variance(mean_returns, cov_matrix):
+    num_assets = len(mean_returns)
+    args = (mean_returns, cov_matrix)
+    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+    bound = (min_weight, max_weight)
+    bounds = tuple(bound for asset in range(num_assets))
+
+    result = sco.minimize(portfolio_volatility, num_assets*[1./num_assets,], args=args,method='SLSQP', bounds=bounds, constraints=constraints)
+
+    return result
+
 def neg_sharpe_ratio(weights, mean_returns, cov_matrix, risk_free_rate):
     p_var, p_ret = portfolio_annualized_performance(weights, mean_returns, cov_matrix)
     return -(p_ret - risk_free_rate) / p_var
@@ -90,24 +104,13 @@ def max_sharpe_ratio(mean_returns, cov_matrix, risk_free_rate):
     num_assets = len(mean_returns)
     args = (mean_returns, cov_matrix, risk_free_rate)
     constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-    bound = (0.0,1.0)
+    bound = (min_weight,max_weight)
     bounds = tuple(bound for asset in range(num_assets))
     result = sco.minimize(neg_sharpe_ratio, num_assets*[1./num_assets,], args=args, method='SLSQP', bounds=bounds, constraints=constraints)
     return result
 
 def portfolio_volatility(weights, mean_returns, cov_matrix):
     return portfolio_annualized_performance(weights, mean_returns, cov_matrix)[0]
-
-def min_variance(mean_returns, cov_matrix):
-    num_assets = len(mean_returns)
-    args = (mean_returns, cov_matrix)
-    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-    bound = (0.0,1.0)
-    bounds = tuple(bound for asset in range(num_assets))
-
-    result = sco.minimize(portfolio_volatility, num_assets*[1./num_assets,], args=args,method='SLSQP', bounds=bounds, constraints=constraints)
-
-    return result
 
 def efficient_return(mean_returns, cov_matrix, target):
     num_assets = len(mean_returns)
@@ -176,7 +179,7 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     print(min_vol_allocation)
     
     plt.figure(figsize=(12, 9))
-    plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='YlGnBu', marker='o', s=10, alpha=0.3)
+    plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='viridis', marker='o', s=10, alpha=0.3)
     plt.colorbar()
     plt.scatter(sdp,rp,marker='*',color='r',s=500, label='Maximum Sharpe ratio')
     plt.scatter(sdp_min,rp_min,marker='*',color='g',s=500, label='Minimum volatility')
@@ -185,18 +188,19 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     plt.ylabel('annualized returns')
     plt.legend(labelspacing=0.8)    
 
-get_data_from_yahoo()
-compile_data()
-
 # Call up compiled data
 table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv')
 table.set_index('Date', inplace=True)
+
+# Weight bounds
+min_weight = 0.0
+max_weight = 0.06
 
 # Variables
 returns = table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
-num_portfolios = 250000
+num_portfolios = 2500
 risk_free_rate = 0.0178
 
 # Run optimization and show graph

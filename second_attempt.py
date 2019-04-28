@@ -15,8 +15,7 @@ import scipy.optimize as sco
 import numpy as np
 
 # date time
-start = dt.datetime(2019,3,31)
-end = dt.datetime(2019,4,25)
+date_today = dt.date.today()
 
 # All data extraction functions
 def save_sp500_tickers():
@@ -50,14 +49,14 @@ def get_data_from_yahoo(reload_sp500=False):
     
     for ticker in tqdm(tickers):
                 
-        if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{}.csv'.format(ticker)):
-            df = pdr.get_data_yahoo(ticker, start, end)
-            df.to_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{}.csv'.format(ticker))
-            if os.path.getsize(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{}.csv'.format(ticker)) == 1:
+        if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today)):
+            df = pdr.get_data_yahoo(ticker, period='5y', interval='1mo')
+            df.to_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today))
+            if os.path.getsize(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today)) == 1:
                 nowork.append(ticker)       
             sleep(randint(1,5))
         else:
-            print("Already have {}".format(ticker))
+            print("Already have {} {}".format(ticker, date_today))
     
     print(nowork)
 
@@ -69,7 +68,7 @@ def compile_data():
         main_df = pd.DataFrame()
 
         for count,ticker in tqdm(enumerate(tickers)): 
-            df = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{}.csv'.format(ticker))
+            df = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today))
             df.set_index('Date', inplace=True)
             df.rename(columns = {'Adj Close' : ticker}, inplace=True)
             df.drop(['Open','High', 'Low', 'Close', 'Volume'], 1, inplace=True)
@@ -203,6 +202,6 @@ cov_matrix = returns.cov()
 num_portfolios = 2500
 risk_free_rate = 0.0178
 
-# Run optimization and show graph
-display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
-plt.show()
+# # Run optimization and show graph
+# display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
+# plt.show()

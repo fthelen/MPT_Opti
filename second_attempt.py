@@ -38,6 +38,9 @@ def get_data_from_yahoo(reload_sp500=False):
     nowork = []
     yf.pdr_override()
     
+    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp500tickers.pickle'):
+        save_sp500_tickers()
+    
     if reload_sp500:
         tickers = save_sp500_tickers()
     else:
@@ -178,7 +181,7 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     print(min_vol_allocation)
     
     plt.figure(figsize=(12, 9))
-    plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='viridis', marker='o', s=10, alpha=0.3)
+    plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='viridis_r', marker='o', s=10, alpha=0.3)
     plt.colorbar()
     plt.scatter(sdp,rp,marker='*',color='r',s=500, label='Maximum Sharpe ratio')
     plt.scatter(sdp_min,rp_min,marker='*',color='g',s=500, label='Minimum volatility')
@@ -199,9 +202,9 @@ max_weight = 0.06
 returns = table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
-num_portfolios = 2500
+num_portfolios = 25000
 risk_free_rate = 0.0178
 
 # # Run optimization and show graph
-# display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
-# plt.show()
+tqdm(display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate))
+plt.show()

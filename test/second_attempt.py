@@ -16,6 +16,18 @@ import numpy as np
 
 # date time
 date_today = dt.date.today()
+data_interval = '1mo'
+period = '5y'
+
+# Set the annualizing period for optimization calculations based on data_interval
+if data_interval == '1mo':
+    annualizing_period = 12
+elif data_interval == '1d':
+    annualizing_period = 252
+elif data_interval == '1w':
+    annualizing_period = 52
+else: 
+    print('Please select either 1mo, 1d, or 1w for your data interval!')
 
 # All data extraction functions
 def save_sp500_tickers():
@@ -38,7 +50,7 @@ def get_data_from_yahoo(reload_sp500=False):
     nowork = []
     yf.pdr_override()
     
-    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp500tickers.pickle'):
+    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp500tickers.pickle'):
         save_sp500_tickers()
     
     if reload_sp500:
@@ -47,15 +59,15 @@ def get_data_from_yahoo(reload_sp500=False):
         with open("sp500tickers.pickle","rb") as f:
             tickers = pickle.load(f)
     
-    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs'):
+    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs'):
         os.makedirs('stock_dfs')
     
     for ticker in tqdm(tickers):
                 
-        if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today)):
-            df = pdr.get_data_yahoo(ticker, period='5y', interval='1mo')
-            df.to_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today))
-            if os.path.getsize(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today)) == 1:
+        if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs''/{} {}.csv'.format(ticker, date_today)):
+            df = pdr.get_data_yahoo(ticker, period=period, interval=data_interval)
+            df.to_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs''/{} {}.csv'.format(ticker, date_today))
+            if os.path.getsize(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs''/{} {}.csv'.format(ticker, date_today)) == 1:
                 nowork.append(ticker)       
             sleep(randint(1,5))
         else:
@@ -64,14 +76,14 @@ def get_data_from_yahoo(reload_sp500=False):
     print(nowork)
 
 def compile_data():
-    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv'): 
+    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv'): 
         with open("sp500tickers.pickle","rb") as f:
                 tickers = pickle.load(f)
     
         main_df = pd.DataFrame()
 
         for count,ticker in tqdm(enumerate(tickers)): 
-            df = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\stock_dfs''/{} {}.csv'.format(ticker, date_today))
+            df = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs''/{} {}.csv'.format(ticker, date_today))
             df.set_index('Date', inplace=True)
             df.rename(columns = {'Adj Close' : ticker}, inplace=True)
             df.drop(['Open','High', 'Low', 'Close', 'Volume'], 1, inplace=True)
@@ -134,8 +146,8 @@ def efficient_frontier(mean_returns, cov_matrix, returns_range):
     return efficients
 
 def portfolio_annualized_performance(weights, mean_returns, cov_matrix):
-    returns = np.sum(mean_returns*weights ) *252
-    std = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
+    returns = np.sum(mean_returns*weights ) * annualizing_period
+    std = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(annualizing_period)
     return std, returns
   
 def random_portfolios(num_portfolios, mean_returns, cov_matrix, risk_free_rate):
@@ -191,10 +203,10 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     plt.legend(labelspacing=0.8)    
 
 # Call up compiled data
-table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv')
+table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv')
 table.set_index('Date', inplace=True)
 
-# Weight bounds
+# Weight bounds (not sure these work yet...)
 min_weight = 0.0
 max_weight = 0.06
 
@@ -203,8 +215,10 @@ returns = table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
 num_portfolios = 25000
+
+# Would like a way to get this automatically
 risk_free_rate = 0.0178
 
-# # Run optimization and show graph
+# Run optimization and show graph
 tqdm(display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate))
 plt.show()

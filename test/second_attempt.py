@@ -16,14 +16,14 @@ import numpy as np
 
 # date time
 date_today = dt.date.today()
-data_interval = '1mo'
-period = '5y'
+data_interval = '1d'
+period = '1mo'
 
 # Set the annualizing period for optimization calculations based on data_interval
 if data_interval == '1mo':
     annualizing_period = 12
 elif data_interval == '1d':
-    annualizing_period = 252
+    annualizing_period = 250
 elif data_interval == '1w':
     annualizing_period = 52
 else: 
@@ -82,7 +82,7 @@ def compile_data():
     
         main_df = pd.DataFrame()
 
-        for count,ticker in tqdm(enumerate(tickers)): 
+        for count,ticker in enumerate(tqdm(tickers)): 
             df = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\stock_dfs''/{} {}.csv'.format(ticker, date_today))
             df.set_index('Date', inplace=True)
             df.rename(columns = {'Adj Close' : ticker}, inplace=True)

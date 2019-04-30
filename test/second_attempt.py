@@ -61,7 +61,7 @@ def get_data_from_yahoo(reload_sp500=False):
     print(nowork)
 
 def compile_data():
-    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv'): 
+    if not os.path.exists(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv'): 
         with open("sp500tickers.pickle","rb") as f:
                 tickers = pickle.load(f)
     
@@ -185,6 +185,48 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     plt.ylabel('annualized returns')
     plt.legend(labelspacing=0.8)    
 
+def display_calculated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate):
+    results, _ = random_portfolios(num_portfolios,mean_returns, cov_matrix, risk_free_rate)
+    
+    max_sharpe = max_sharpe_ratio(mean_returns, cov_matrix, risk_free_rate)
+    sdp, rp = portfolio_annualized_performance(max_sharpe['x'], mean_returns, cov_matrix)
+    max_sharpe_allocation = pd.DataFrame(max_sharpe.x,index=table.columns,columns=['allocation'])
+    max_sharpe_allocation.allocation = [round(i*100,2)for i in max_sharpe_allocation.allocation]
+    max_sharpe_allocation = max_sharpe_allocation.T
+
+    min_vol = min_variance(mean_returns, cov_matrix)
+    sdp_min, rp_min = portfolio_annualized_performance(min_vol['x'], mean_returns, cov_matrix)
+    min_vol_allocation = pd.DataFrame(min_vol.x,index=table.columns,columns=['allocation'])
+    min_vol_allocation.allocation = [round(i*100,2)for i in min_vol_allocation.allocation]
+    min_vol_allocation = min_vol_allocation.T
+    
+    print ("-"*80)
+    print ("Maximum Sharpe Ratio Portfolio Allocation\n")
+    print ("Annualised Return:", round(rp,2))
+    print ("Annualised Volatility:", round(sdp,2))
+    print ("\n")
+    print (max_sharpe_allocation)
+    print ("-"*80)
+    print ("Minimum Volatility Portfolio Allocation\n")
+    print ("Annualised Return:", round(rp_min,2))
+    print ("Annualised Volatility:", round(sdp_min,2))
+    print ("\n")
+    print (min_vol_allocation)
+    
+    plt.figure(figsize=(10, 7))
+    plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='YlGnBu', marker='o', s=10, alpha=0.3)
+    plt.colorbar()
+    plt.scatter(sdp,rp,marker='*',color='r',s=500, label='Maximum Sharpe ratio')
+    plt.scatter(sdp_min,rp_min,marker='*',color='g',s=500, label='Minimum volatility')
+
+    target = np.linspace(rp_min, 0.32, 50)
+    efficient_portfolios = efficient_frontier(mean_returns, cov_matrix, target)
+    plt.plot([p['fun'] for p in efficient_portfolios], target, linestyle='-.', color='black', label='efficient frontier')
+    plt.title('Calculated Portfolio Optimization based on Efficient Frontier')
+    plt.xlabel('annualized volatility')
+    plt.ylabel('annualized returns')
+    plt.legend(labelspacing=0.8)
+
 # date time
 date_today = dt.date.today()
 data_interval = '1d'
@@ -205,7 +247,7 @@ get_data_from_yahoo()
 compile_data()
 
 # Call up compiled data
-table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv', parse_dates=True, index_col=0)
+table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\sp_500_join_closes.csv', parse_dates=True, index_col=0)
 
 # Weight bounds (not sure these work yet...)
 min_weight = 0.0
@@ -221,5 +263,5 @@ num_portfolios = 25000
 risk_free_rate = 0.0178
 
 # Run optimization and show graph
-tqdm(display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate))
+display_calculated_ef_with_random(mean_returns, cov_matrix, num_portfolios, risk_free_rate)
 plt.show()

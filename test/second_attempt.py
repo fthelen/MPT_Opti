@@ -14,21 +14,6 @@ from random import randint
 import scipy.optimize as sco
 import numpy as np
 
-# date time
-date_today = dt.date.today()
-data_interval = '1d'
-period = '1mo'
-
-# Set the annualizing period for optimization calculations based on data_interval
-if data_interval == '1mo':
-    annualizing_period = 12
-elif data_interval == '1d':
-    annualizing_period = 250
-elif data_interval == '1w':
-    annualizing_period = 52
-else: 
-    print('Please select either 1mo, 1d, or 1w for your data interval!')
-
 # All data extraction functions
 def save_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
@@ -91,12 +76,10 @@ def compile_data():
                 main_df = df
             else:
                 main_df = main_df.join(df, how='outer')
+            
+            main_df.dropna(inplace=True)
 
             main_df.to_csv('sp_500_join_closes.csv')
-
-# Run data functions
-get_data_from_yahoo()
-compile_data()
 
 # Portfolio optimization and dislay functions
 def min_variance(mean_returns, cov_matrix):
@@ -202,9 +185,27 @@ def display_simulated_ef_with_random(mean_returns, cov_matrix, num_portfolios, r
     plt.ylabel('annualized returns')
     plt.legend(labelspacing=0.8)    
 
+# date time
+date_today = dt.date.today()
+data_interval = '1d'
+period = '1mo'
+
+# Set the annualizing period for optimization calculations based on data_interval
+if data_interval == '1mo':
+    annualizing_period = 12
+elif data_interval == '1d':
+    annualizing_period = 250
+elif data_interval == '1w':
+    annualizing_period = 52
+else: 
+    print('Please select either 1mo, 1d, or 1w for your data interval!')
+
+# Run data functions
+get_data_from_yahoo()
+compile_data()
+
 # Call up compiled data
-table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv')
-table.set_index('Date', inplace=True)
+table = pd.read_csv(r'C:\Users\FEED\Documents\GitHub\MPT_Opti\test\sp_500_join_closes.csv', parse_dates=True, index_col=0)
 
 # Weight bounds (not sure these work yet...)
 min_weight = 0.0

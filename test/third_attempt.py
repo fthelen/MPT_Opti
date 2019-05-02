@@ -14,27 +14,6 @@ from random import randint
 import scipy.optimize as sco
 import numpy as np
 
-# Get data
-def get_data_from_yahoo(tickers):
-    
-    yf.pdr_override()
-    table = pd.DataFrame()
-
-    for ticker in tqdm(tickers):
-        # sleep(randint(1,5)
-        df = pdr.get_data_yahoo(ticker, period=period, interval=data_interval)
-        df.rename(columns = {'Adj Close' : ticker}, inplace=True)
-        df.drop(['Open','High', 'Low', 'Close', 'Volume'], 1, inplace=True)    
-        if table.empty:
-            table = df
-        else:
-            table = table.join(df, how='outer')
-        # sleep(randint(1,5)
-    
-    table.dropna(inplace=True)
-        
-    return table     
-
 # Portfolio optimization and dislay functions
 def min_variance(mean_returns, cov_matrix):
     num_assets = len(mean_returns)
@@ -183,7 +162,7 @@ def display_calculated_ef_with_random(mean_returns, cov_matrix, num_portfolios, 
 
 # date time
 date_today = dt.date.today()
-data_interval = '1wk'
+data_interval = '1d'
 period = '5y'
 
 # Set the annualizing period for optimization calculations based on data_interval
@@ -196,7 +175,7 @@ elif data_interval == '1wk':
 else: 
     print('Please select either 1mo, 1d, or 1w for your data interval!')
 
-tickers = ['AAPL', 'STZ', 'XOM', 'ULTA', 'AMZN','COST', 'IBM', 'V', 'GS', 'HD', 'BLK', 'HON', 'NFLX', 'INTC', 'NEE', 'CGNX', 'AMBA', 'CHD']
+tickers = ['QCOM','SCHW','VZ','AAPL', 'STZ', 'XOM']
 
 # Run data functions
 yf.pdr_override()
@@ -212,17 +191,19 @@ for ticker in tqdm(tickers):
         table = table.join(df, how='outer')
     sleep(randint(1,5))
     
-table.dropna(inplace=True)
-            
+
+print(table.head())
+print(table.tail())            
+
 # Weight bounds (not sure these work yet...)
 min_weight = 0.02
-max_weight = 0.06
+max_weight = 0.25
 
 # Variables
 returns = table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
-num_portfolios = 25000
+num_portfolios = 500000
 
 # Would like a way to get this automatically
 risk_free_rate = 0.0178

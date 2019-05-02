@@ -14,6 +14,39 @@ from random import randint
 import scipy.optimize as sco
 import numpy as np
 
+def get_data_yahoo(tickers, period, interval):
+    '''
+    Gets historical price data (HOLC) from Yahoo! Fianance.
+    Drops everything but the 'Adj Close' data and appends it to a df.
+
+    fetch data by interval (including intraday if period < 60 days)
+    valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+    (optional, default is '1d')
+
+    use "period" instead of start/end
+    valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+    (optional, default is '1mo')
+    '''
+    yf.pdr_override()
+    table = pd.DataFrame()
+    
+    for ticker in tqdm(tickers):
+        df = pdr.get_data_yahoo(ticker, period=period, interval=data_interval)
+        df.rename(columns = {'Adj Close' : ticker}, inplace=True)
+        df.drop(['Open','High', 'Low', 'Close', 'Volume'], 1, inplace=True)    
+        if table.empty:
+            table = df
+        else:
+            table = table.join(df, how='outer')
+        sleep(randint(1,5))
+    
+    table.dropna(inplace=True)
+    
+    print(table.head())
+    print(table.tail())  
+
+    return table
+
 # Portfolio optimization and dislay functions
 def min_variance(mean_returns, cov_matrix):
     num_assets = len(mean_returns)
@@ -149,12 +182,12 @@ def display_calculated_ef_with_random(mean_returns, cov_matrix, num_portfolios, 
     plt.figure(figsize=(10, 7))
     plt.scatter(results[0,:],results[1,:],c=results[2,:],cmap='RdYlGn', marker='o', s=10, alpha=0.3)
     plt.colorbar()
-    plt.scatter(sdp,rp,marker='*',color='r',s=500, label='Maximum Sharpe ratio')
-    plt.scatter(sdp_min,rp_min,marker='*',color='g',s=500, label='Minimum volatility')
+    plt.scatter(sdp,rp,marker='*',color='r',s=250, label='Maximum Sharpe ratio')
+    plt.scatter(sdp_min,rp_min,marker='*',color='g',s=250, label='Minimum volatility')
 
-    target = np.linspace(rp_min, 0.32, 50)
-    efficient_portfolios = efficient_frontier(mean_returns, cov_matrix, target)
-    plt.plot([p['fun'] for p in efficient_portfolios], target, linestyle='-.', color='black', label='efficient frontier')
+    # target = np.linspace(rp_min, 0.26, 50)
+    # efficient_portfolios = efficient_frontier(mean_returns, cov_matrix, target)
+    # plt.plot([p['fun'] for p in efficient_portfolios], target, linestyle='-.', color='black', label='efficient frontier')
     plt.title('Calculated Portfolio Optimization based on Efficient Frontier')
     plt.xlabel('annualized volatility')
     plt.ylabel('annualized returns')
@@ -177,33 +210,16 @@ else:
 
 tickers = ['QCOM','SCHW','VZ','AAPL', 'STZ', 'XOM']
 
-# Run data functions
-yf.pdr_override()
-table = pd.DataFrame()
-
-for ticker in tqdm(tickers):
-    df = pdr.get_data_yahoo(ticker, period=period, interval=data_interval)
-    df.rename(columns = {'Adj Close' : ticker}, inplace=True)
-    df.drop(['Open','High', 'Low', 'Close', 'Volume'], 1, inplace=True)    
-    if table.empty:
-        table = df
-    else:
-        table = table.join(df, how='outer')
-    sleep(randint(1,5))
-    
-
-print(table.head())
-print(table.tail())            
-
 # Weight bounds (not sure these work yet...)
-min_weight = 0.02
-max_weight = 0.25
+min_weight = 0.00
+max_weight = 1.00
 
 # Variables
-returns = table.pct_change()
+table =  get_data_yahoo(tickers, period, data_interval)
+returns =table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
-num_portfolios = 500000
+num_portfolios = 50000
 
 # Would like a way to get this automatically
 risk_free_rate = 0.0178

@@ -185,9 +185,9 @@ def display_calculated_ef_with_random(mean_returns, cov_matrix, num_portfolios, 
     plt.scatter(sdp,rp,marker='*',color='r',s=250, label='Maximum Sharpe ratio')
     plt.scatter(sdp_min,rp_min,marker='*',color='g',s=250, label='Minimum volatility')
 
-    # target = np.linspace(rp_min, 0.26, 50)
-    # efficient_portfolios = efficient_frontier(mean_returns, cov_matrix, target)
-    # plt.plot([p['fun'] for p in efficient_portfolios], target, linestyle='-.', color='black', label='efficient frontier')
+    target = np.linspace(min(results[0,:]), max(results[1,:]), 50)
+    efficient_portfolios = efficient_frontier(mean_returns, cov_matrix, target)
+    plt.plot([p['fun'] for p in efficient_portfolios], target, linestyle='-.', color='black', label='Efficient Frontier')
     plt.title('Calculated Portfolio Optimization based on Efficient Frontier')
     plt.xlabel('annualized volatility')
     plt.ylabel('annualized returns')
@@ -212,14 +212,14 @@ tickers = ['QCOM','SCHW','VZ','AAPL', 'STZ', 'XOM']
 
 # Weight bounds (not sure these work yet...)
 min_weight = 0.00
-max_weight = 1.00
+max_weight = 0.50
 
 # Variables
 table =  get_data_yahoo(tickers, period, data_interval)
 returns =table.pct_change()
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
-num_portfolios = 50000
+num_portfolios = 100000
 
 # Would like a way to get this automatically
 risk_free_rate = 0.0178
